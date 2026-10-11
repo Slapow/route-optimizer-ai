@@ -6,7 +6,7 @@ AI search route optimizer evaluated on OpenStreetMap road data and benchmarked a
 This project evaluates an informed A* graph search algorithm against OSRM across route length and execution latency.
 
 ## Team Contributions
-- Seth: Repository setup, project structure, environment configuration, and pipeline integration.
+- Repository setup, project structure, environment configuration, and pipeline integration.
 - Graph ingestion and coordinate mapping.
 - AI heuristic implementation and OSRM benchmark execution.
 
