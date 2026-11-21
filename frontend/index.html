@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Route Planner · Route Optimizer</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script type="module" src="js/planner.js"></script>
+</head>
+<body class="page page--planner">
+  <header class="site-header">
+    <a class="site-header__brand" href="index.html">Route Optimizer</a>
+    <nav class="site-nav" aria-label="Main">
+      <a class="site-nav__link" href="index.html" aria-current="page">Route planner</a>
+      <a class="site-nav__link" href="benchmarks.html">Benchmarks</a>
+    </nav>
+    <span class="mode-badge" id="mode-badge" data-mode="mock">Sample data</span>
+  </header>
+
+  <main class="planner">
+    <aside class="planner__panel" aria-label="Route controls">
+      <section class="panel-section">
+        <h1 class="panel-section__title">Plan a route</h1>
+        <p class="panel-section__hint">Click the map to add stops. The first stop is the start. Drag a marker to move it.</p>
+      </section>
+
+      <section class="panel-section" aria-labelledby="stops-heading">
+        <div class="panel-section__header">
+          <h2 class="panel-section__subtitle" id="stops-heading">Stops</h2>
+          <span class="stop-count" id="stop-count">0 / 25</span>
+        </div>
+        <p class="empty-state" id="stop-empty">No stops yet.</p>
+        <ol class="stop-list" id="stop-list"></ol>
+      </section>
+
+      <form class="panel-section route-form" id="route-form">
+        <h2 class="panel-section__subtitle">Options</h2>
+
+        <label class="field">
+          <span class="field__label">Path algorithm</span>
+          <select class="field__control" name="algorithm" id="algorithm">
+            <option value="astar" selected>A*</option>
+            <option value="dijkstra">Dijkstra</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Optimize for</span>
+          <select class="field__control" name="metric" id="metric">
+            <option value="duration" selected>Travel time</option>
+            <option value="distance">Distance</option>
+          </select>
+        </label>
+
+        <label class="checkbox">
+          <input class="checkbox__input" type="checkbox" name="round_trip" id="round-trip">
+          <span class="checkbox__label">Return to start</span>
+        </label>
+
+        <div class="button-row">
+          <button class="button button--primary" type="submit" id="optimize-button" disabled>Optimize route</button>
+        </div>
+        <div class="button-row">
+          <button class="button button--secondary" type="button" id="sample-button">Load sample stops</button>
+          <button class="button button--ghost" type="button" id="clear-button">Clear</button>
+        </div>
+      </form>
+
+      <p class="status" id="status" role="status" aria-live="polite" data-tone="info"></p>
+
+      <section class="panel-section results" id="results" aria-labelledby="results-heading" hidden>
+        <h2 class="panel-section__subtitle" id="results-heading">Ours vs OSRM</h2>
+
+        <fieldset class="layer-toggles">
+          <legend class="layer-toggles__legend">Show on map</legend>
+          <label class="layer-toggle">
+            <input class="layer-toggle__input" type="checkbox" data-layer="ours" checked>
+            <span class="route-key route-key--ours" aria-hidden="true"></span>
+            <span class="layer-toggle__label">Our route</span>
+          </label>
+          <label class="layer-toggle">
+            <input class="layer-toggle__input" type="checkbox" data-layer="osrm" checked>
+            <span class="route-key route-key--osrm" aria-hidden="true"></span>
+            <span class="layer-toggle__label">OSRM route</span>
+          </label>
+        </fieldset>
+
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th scope="col"><span class="visually-hidden">Measure</span></th>
+              <th scope="col" data-system="ours" data-field="algorithm">Ours</th>
+              <th scope="col" data-system="osrm" data-field="algorithm">OSRM</th>
+              <th scope="col">vs OSRM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Distance</th>
+              <td data-system="ours" data-field="distance"></td>
+              <td data-system="osrm" data-field="distance"></td>
+              <td data-system="diff" data-field="distance"></td>
+            </tr>
+            <tr>
+              <th scope="row">Travel time</th>
+              <td data-system="ours" data-field="duration"></td>
+              <td data-system="osrm" data-field="duration"></td>
+              <td data-system="diff" data-field="duration"></td>
+            </tr>
+            <tr>
+              <th scope="row">Compute time</th>
+              <td data-system="ours" data-field="runtime"></td>
+              <td data-system="osrm" data-field="runtime"></td>
+              <td data-system="diff" data-field="runtime"></td>
+            </tr>
+            <tr>
+              <th scope="row">Nodes explored</th>
+              <td data-system="ours" data-field="nodes"></td>
+              <td data-system="osrm" data-field="nodes"></td>
+              <td data-system="diff" data-field="nodes"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <dl class="order-list">
+          <div class="order-list__row">
+            <dt class="order-list__term"><span class="route-key route-key--ours" aria-hidden="true"></span>Our order</dt>
+            <dd class="order-list__value" data-system="ours" data-field="order"></dd>
+          </div>
+          <div class="order-list__row">
+            <dt class="order-list__term"><span class="route-key route-key--osrm" aria-hidden="true"></span>OSRM order</dt>
+            <dd class="order-list__value" data-system="osrm" data-field="order"></dd>
+          </div>
+        </dl>
+
+        <div class="breakdown" id="breakdown" hidden>
+          <h3 class="breakdown__title">Our compute time, by step</h3>
+          <dl class="breakdown__list">
+            <div class="breakdown__row">
+              <dt>Distance matrix</dt>
+              <dd data-breakdown="matrix"></dd>
+            </div>
+            <div class="breakdown__row">
+              <dt>Stop ordering</dt>
+              <dd data-breakdown="ordering"></dd>
+            </div>
+            <div class="breakdown__row">
+              <dt>Final path</dt>
+              <dd data-breakdown="path"></dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+    </aside>
+
+    <div class="planner__map" id="map" role="application" aria-label="Map. Click to add a stop."></div>
+  </main>
+
+  <template id="stop-item-template">
+    <li class="stop-item">
+      <span class="stop-item__badge"></span>
+      <span class="stop-item__text">
+        <span class="stop-item__name"></span>
+        <span class="stop-item__coords"></span>
+      </span>
+      <button class="stop-item__remove" type="button">Remove</button>
+    </li>
+  </template>
+</body>
+</html>

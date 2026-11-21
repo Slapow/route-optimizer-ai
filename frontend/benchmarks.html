@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Benchmarks · Route Optimizer</title>
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js" defer></script>
+  <script type="module" src="js/benchmarks.js"></script>
+</head>
+<body class="page page--benchmarks">
+  <header class="site-header">
+    <a class="site-header__brand" href="index.html">Route Optimizer</a>
+    <nav class="site-nav" aria-label="Main">
+      <a class="site-nav__link" href="index.html">Route planner</a>
+      <a class="site-nav__link" href="benchmarks.html" aria-current="page">Benchmarks</a>
+    </nav>
+    <span class="mode-badge" id="mode-badge" data-mode="mock">Sample data</span>
+  </header>
+
+  <main class="bench">
+    <section class="bench__intro">
+      <h1 class="bench__title">Benchmarks vs OSRM</h1>
+      <p class="bench__meta" id="bench-meta"></p>
+    </section>
+
+    <form class="filter-row" id="filters" aria-label="Filters">
+      <label class="field field--inline">
+        <span class="field__label">Our algorithm</span>
+        <select class="field__control" id="algorithm-filter">
+          <option value="all" selected>All algorithms</option>
+        </select>
+      </label>
+    </form>
+
+    <p class="status" id="status" role="status" aria-live="polite" data-tone="info"></p>
+
+    <div class="bench__content" id="bench-content" hidden>
+      <section class="stat-grid" aria-label="Summary">
+        <article class="stat-tile">
+          <h2 class="stat-tile__label">Test cases</h2>
+          <p class="stat-tile__value" data-stat="cases"></p>
+          <p class="stat-tile__note" data-stat-note="cases"></p>
+        </article>
+        <article class="stat-tile">
+          <h2 class="stat-tile__label">Distance vs OSRM</h2>
+          <p class="stat-tile__value" data-stat="distance"></p>
+          <p class="stat-tile__note">Average. 0% means the same length as OSRM.</p>
+        </article>
+        <article class="stat-tile">
+          <h2 class="stat-tile__label">Travel time vs OSRM</h2>
+          <p class="stat-tile__value" data-stat="duration"></p>
+          <p class="stat-tile__note">Average. Positive means slower routes than OSRM.</p>
+        </article>
+        <article class="stat-tile">
+          <h2 class="stat-tile__label">Compute time vs OSRM</h2>
+          <p class="stat-tile__value" data-stat="runtime"></p>
+          <p class="stat-tile__note">Our average compute time ÷ OSRM's.</p>
+        </article>
+      </section>
+
+      <section class="chart-grid" aria-label="Charts">
+        <article class="chart-card">
+          <h2 class="chart-card__title">Route distance vs OSRM</h2>
+          <p class="chart-card__subtitle">Average % longer than OSRM's route, by number of stops. Lower is better.</p>
+          <div class="chart-card__canvas">
+            <canvas id="chart-distance" role="img" aria-label="Bar chart of average distance gap versus OSRM by number of stops. Values are in the data table below."></canvas>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <h2 class="chart-card__title">Travel time vs OSRM</h2>
+          <p class="chart-card__subtitle">Average % slower than OSRM's route, by number of stops. Lower is better.</p>
+          <div class="chart-card__canvas">
+            <canvas id="chart-duration" role="img" aria-label="Bar chart of average travel time gap versus OSRM by number of stops. Values are in the data table below."></canvas>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <h2 class="chart-card__title">Compute time</h2>
+          <p class="chart-card__subtitle">Average milliseconds per request, log scale. Lower is faster.</p>
+          <div class="chart-card__canvas">
+            <canvas id="chart-runtime" role="img" aria-label="Line chart of average compute time by number of stops for each algorithm and OSRM. Values are in the data table below."></canvas>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <h2 class="chart-card__title">Nodes explored</h2>
+          <p class="chart-card__subtitle">Average graph nodes searched per request (our algorithms only; OSRM doesn't report this).</p>
+          <div class="chart-card__canvas">
+            <canvas id="chart-nodes" role="img" aria-label="Line chart of average nodes explored by number of stops for each of our algorithms. Values are in the data table below."></canvas>
+          </div>
+        </article>
+      </section>
+
+      <details class="data-table">
+        <summary class="data-table__summary">Show data table</summary>
+        <div class="data-table__scroll">
+          <table class="bench-table">
+            <thead>
+              <tr>
+                <th scope="col">Case</th>
+                <th scope="col" class="data-num">Stops</th>
+                <th scope="col">Algorithm</th>
+                <th scope="col" class="data-num">Distance</th>
+                <th scope="col" class="data-num">vs OSRM</th>
+                <th scope="col" class="data-num">Travel time</th>
+                <th scope="col" class="data-num">vs OSRM</th>
+                <th scope="col" class="data-num">Compute time</th>
+                <th scope="col" class="data-num">Nodes explored</th>
+              </tr>
+            </thead>
+            <tbody id="bench-table-body"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </main>
+
+  <template id="bench-row-template">
+    <tr>
+      <td data-col="case"></td>
+      <td class="data-num" data-col="stops"></td>
+      <td data-col="algorithm"></td>
+      <td class="data-num" data-col="distance"></td>
+      <td class="data-num" data-col="distance-gap"></td>
+      <td class="data-num" data-col="duration"></td>
+      <td class="data-num" data-col="duration-gap"></td>
+      <td class="data-num" data-col="runtime"></td>
+      <td class="data-num" data-col="nodes"></td>
+    </tr>
+  </template>
+</body>
+</html>
