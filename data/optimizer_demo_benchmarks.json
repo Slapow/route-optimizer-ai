@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-11-25T15:50:51Z",
+  "area": "SYNTHETIC DEMO - not measured OSRM data",
+  "metric": "duration",
+  "osrm_profile": "car",
+  "rows": [
+    {
+      "case_id": "demo-four-stops",
+      "num_stops": 4,
+      "seed": 1,
+      "system": "ours",
+      "algorithm": "A* + Nearest Neighbor",
+      "distance_m": 650.0,
+      "duration_s": 65.0,
+      "runtime_ms": 0.1286999904550612,
+      "nodes_explored": null
+    },
+    {
+      "case_id": "demo-four-stops",
+      "num_stops": 4,
+      "seed": 1,
+      "system": "ours",
+      "algorithm": "A* + 2-opt",
+      "distance_m": 600.0,
+      "duration_s": 60.0,
+      "runtime_ms": 0.04469999112188816,
+      "nodes_explored": null
+    },
+    {
+      "case_id": "demo-four-stops",
+      "num_stops": 4,
+      "seed": 1,
+      "system": "osrm",
+      "algorithm": "OSRM trip",
+      "distance_m": 650.0,
+      "duration_s": 65.0,
+      "runtime_ms": 0.0,
+      "nodes_explored": null
+    }
+  ]
+}
