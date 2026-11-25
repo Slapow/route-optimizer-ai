@@ -1,0 +1,66 @@
+Seth's optimizer handoff
+
+Run these commands from the repository folder:
+  python src/optimizer.py
+  python -m unittest discover -s tests -v
+  python -m src.benchmark_optimizer data/optimizer_demo_input.json data/optimizer_demo_benchmarks.json
+
+The demo is made-up data, including its OSRM comparison. It proves the code runs;
+it is not a measured OSRM benchmark. Its open route improves from 65 to 60 seconds.
+Real backend and OSRM measurements are still needed for the project evaluation.
+
+Backend integration:
+  from src.optimizer import optimize
+  response = optimize(request, distance_matrix, duration_matrix, paths, osrm_result,
+                      nodes_explored=nodes, started_at=request_started_at)
+
+request is the request in docs/API_CONTRACT.md. Every matrix row and column uses
+the same order as request["stops"]. distance_matrix contains meters; duration_matrix
+contains seconds. Both matrices must describe the same paths for the chosen metric.
+For example, when minimizing duration, each pair's distance is the length of that
+pair's fastest path, not the length of a different shortest-distance path.
+All pairs must be reachable and contain finite, nonnegative costs.
+paths[i][j] is the driven path from stop i to stop j, with [latitude, longitude]
+points. Convert OSRM's [longitude, latitude] points before passing them in.
+osrm_result is the backend's RouteResult for the same stops, first stop, metric,
+and round_trip setting. Its order must not repeat the start for a round trip.
+nodes is the total number of graph nodes explored, or None when unknown.
+request_started_at is time.perf_counter() saved at the start of the request.
+Without started_at, runtime_ms measures optimize() only.
+The API layer must catch ValueError and return {"error": str(error)} with a 4xx
+status for invalid data. This module does not create an HTTP endpoint.
+
+The result contains stops, metric, round_trip, results.ours, and results.osrm.
+The first stop stays fixed. Round trips include the return cost and geometry but
+list the start ID only once. Driven paths are joined without repeated endpoints.
+Nearest Neighbor is the starting route. 2-Opt reverses sections to reduce cost.
+Neither method guarantees the global best route. Full cost checks support roads
+whose travel times differ by direction.
+For baseline results, pass method="nearest_neighbor" to optimize().
+The default method="two_opt" runs Nearest Neighbor followed by 2-Opt.
+
+Benchmark input:
+Use data/optimizer_demo_input.json as the file layout and replace its sample
+values with real data. The top-level fields are area, metric, osrm_profile, cases.
+Each case has case_id, seed, request, distance_matrix, duration_matrix, paths,
+osrm_result, upstream_runtime_ms, and optionally nodes_explored.
+Use a unique case_id per case. All cases in one file use the same metric.
+upstream_runtime_ms is the measured time to prepare that case's matrices and road
+paths, before ordering. The runner adds it to each measured ordering/assembly time.
+This avoids comparing ordering-only time against OSRM's complete runtime.
+Each case's OSRM measurement must use the same round-trip setting and fixed start.
+Do not mix one-way and round-trip cases in a single chart series: the chart schema
+has no round_trip field. Use separate benchmark files for those experiments.
+The runner saves the exact BenchmarkFile fields and one OSRM row per case. It adds
+two ours rows, labeled with the matrix algorithm and Nearest Neighbor or 2-opt.
+It makes no network calls. The backend supplies actual OSRM results.
+
+Files edited for Seth's part:
+  src/optimizer.py: route totals, Nearest Neighbor, 2-Opt, response, runnable demo.
+  src/benchmark_optimizer.py: compare both methods with supplied OSRM measurements.
+  tests/test_optimizer.py: repeatable behavior, edge-case, and contract tests.
+  data/optimizer_demo_input.json: explicitly synthetic backend-input example.
+  data/optimizer_demo_benchmarks.json: demo output from the benchmark command.
+  OPTIMIZER_HANDOFF.txt: integration notes and this edit record.
+
+Frontend and docs files were only read. The empty backend files were not edited.
